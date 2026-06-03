@@ -1,0 +1,45 @@
+# Core
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+pydantic==2.7.1
+pydantic-settings==2.3.0
+python-dotenv==1.0.1
+
+# LLM
+anthropic==0.28.0
+langchain==0.2.5
+langchain-anthropic==0.1.15
+langchain-community==0.2.5
+
+# Vector Store & Embeddings
+chromadb==0.5.3
+sentence-transformers==3.0.1
+
+# Monitoring Clients
+prometheus-api-client==0.5.5
+prometheus-client==0.20.0
+kubernetes==30.1.0
+httpx==0.27.0
+aiohttp==3.9.5
+
+# ML / Anomaly Detection
+scikit-learn==1.5.0
+numpy==1.26.4
+pandas==2.2.2
+
+# Async
+asyncio-mqtt==0.16.2
+anyio==4.4.0
+
+# Utilities
+structlog==24.2.0
+rich==13.7.1
+tenacity==8.3.0
+pytz==2024.1
+python-dateutil==2.9.0
+
+# Testing
+pytest==8.2.2
+pytest-asyncio==0.23.7
+pytest-mock==3.14.0
+httpx==0.27.0

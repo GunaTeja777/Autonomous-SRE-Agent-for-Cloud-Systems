@@ -1,0 +1,87 @@
+version: "3.9"
+
+services:
+  sre-agent:
+    build: .
+    container_name: autonomous-sre-agent
+    ports:
+      - "8000:8000"
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+      - ~/.kube:/root/.kube:ro
+    depends_on:
+      - prometheus
+      - loki
+      - chromadb
+    networks:
+      - sre-net
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./dashboards/prometheus_rules.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - sre-net
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: loki
+    ports:
+      - "3100:3100"
+    networks:
+      - sre-net
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./dashboards:/etc/grafana/provisioning/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - sre-net
+    restart: unless-stopped
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.58
+    container_name: jaeger
+    ports:
+      - "16686:16686"
+      - "14268:14268"
+    networks:
+      - sre-net
+    restart: unless-stopped
+
+  chromadb:
+    image: chromadb/chroma:0.5.3
+    container_name: chromadb
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_data:/chroma/.chroma
+    networks:
+      - sre-net
+    restart: unless-stopped
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  chroma_data:
+
+networks:
+  sre-net:
+    driver: bridge
