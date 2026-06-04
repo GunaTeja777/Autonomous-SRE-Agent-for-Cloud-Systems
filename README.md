@@ -188,8 +188,8 @@ AUTO_REMEDIATE=false
 DRY_RUN=true
 
 # LLM Reasoning Settings
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
-LLM_MODEL=claude-3-haiku-20240307
+GEMINI_API_KEY=your_gemini_api_key_here
+LLM_MODEL=gemini-2.5-flash
 LLM_TEMPERATURE=0.0
 
 # Observability Stack Endpoints
@@ -199,7 +199,7 @@ JAEGER_URL=http://jaeger:16686
 ```
 
 > [!TIP]
-> If `ANTHROPIC_API_KEY` contains placeholder strings or is empty, the LLM client automatically defaults to rule-based fallback responses, allowing fully operational local simulation.
+> If `GEMINI_API_KEY` contains placeholder strings or is empty, the LLM client automatically defaults to rule-based fallback responses, allowing fully operational local simulation.
 
 ### 4.3 Running Locally (Development Mode)
 Run the application directly on the host machine. If Prometheus, Loki, or Kubernetes are unreachable, the clients gracefully auto-toggle into fast-fallback mock modes, bypassing network timeouts.
