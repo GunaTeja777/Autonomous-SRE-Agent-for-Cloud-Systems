@@ -1,0 +1,107 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Pyenv
+.python-version
+
+# IDEs and editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# VS Code settings storage
+.vscode/
+
+# Logs and local data
+*.log
+logs/
+*.sqlite3
+*.db
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# Docker
+docker-compose.override.yml
+.env
+
+# ChromaDB
+data/embeddings/
+
+# Node
+node_modules/
+
+# pytest
+.pytest_cache/
+
+# Coverage
+htmlcov/
+.coverage
+coverage.xml
+
+# mypy
+.mypy_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Generated dashboards and exports
+autonomous-sre-agent/data/dashboards/
+
+# Secrets
+secrets.yaml
+
+# compiled binaries
+*.exe
+*.dll
+*.so
+
+# Local kube config
+/root/.kube
+
+# Misc
+*.bak
+*.swp
+
+# Ignore environment files that may contain secrets
+autonomous-sre-agent/.env
+
+# GitHub Actions
+.github/.cache
