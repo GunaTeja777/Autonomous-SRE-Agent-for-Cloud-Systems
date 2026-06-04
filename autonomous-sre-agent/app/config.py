@@ -6,8 +6,8 @@ from typing import Literal
 
 class Settings(BaseSettings):
     # LLM
-    anthropic_api_key: str = Field(..., env="ANTHROPIC_API_KEY")
-    llm_model: str = Field("claude-opus-4-5", env="LLM_MODEL")
+    gemini_api_key: str = Field(..., env="GEMINI_API_KEY")
+    llm_model: str = Field("gemini-2.5-flash", env="LLM_MODEL")
     llm_max_tokens: int = Field(4096, env="LLM_MAX_TOKENS")
     llm_temperature: float = Field(0.1, env="LLM_TEMPERATURE")
 

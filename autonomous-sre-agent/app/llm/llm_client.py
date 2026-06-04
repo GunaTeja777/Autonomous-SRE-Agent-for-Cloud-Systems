@@ -15,16 +15,16 @@ class LLMClient:
     def _get_client(self):
         if self.client is None:
             # Check if key is present and not dummy/placeholder
-            api_key = self.settings.anthropic_api_key
+            api_key = self.settings.gemini_api_key
             if not api_key or api_key == "PLACEHOLDER" or "your_" in api_key.lower():
-                logger.warning("anthropic_api_key_not_provided_using_mock")
+                logger.warning("gemini_api_key_not_provided_using_mock")
                 self.client = "mock"
             else:
                 try:
-                    import anthropic
-                    self.client = anthropic.AsyncAnthropic(api_key=api_key)
+                    from google import genai
+                    self.client = genai.Client(api_key=api_key)
                 except Exception as e:
-                    logger.error("failed_to_initialize_anthropic_client", error=str(e))
+                    logger.error("failed_to_initialize_gemini_client", error=str(e))
                     self.client = "mock"
         return self.client
 
@@ -35,21 +35,25 @@ class LLMClient:
 
         try:
             logger.info("llm_call_start", model=self.settings.llm_model)
-            response = await client.messages.create(
-                model=self.settings.llm_model,
-                max_tokens=self.settings.llm_max_tokens,
+            from google.genai import types
+            config = types.GenerateContentConfig(
+                system_instruction=system_prompt,
                 temperature=self.settings.llm_temperature,
-                system=system_prompt,
-                messages=[
-                    {"role": "user", "content": user_prompt}
-                ]
+                max_output_tokens=self.settings.llm_max_tokens,
             )
+            # Use client.aio for asynchronous requests
+            async with client.aio as aclient:
+                response = await aclient.models.generate_content(
+                    model=self.settings.llm_model,
+                    contents=user_prompt,
+                    config=config
+                )
             logger.info("llm_call_completed")
-            content = response.content[0].text
+            content = response.text
             return content
         except Exception as e:
             logger.error("llm_call_failed", error=str(e))
-            raise LLMClientError(f"Anthropic LLM call failed: {e}") from e
+            raise LLMClientError(f"Gemini LLM call failed: {e}") from e
 
     def _mock_response(self, system_prompt: str, user_prompt: str) -> str:
         """Fallback mock responses that return logically consistent JSON formats."""
