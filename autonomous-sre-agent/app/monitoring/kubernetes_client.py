@@ -172,15 +172,40 @@ class KubernetesClient:
     def rollback_deployment(self, name: str, namespace: str | None = None) -> bool:
         ns = namespace or self._default_namespace
         try:
+            # 1. Read deployment to get current revision and selector
             deploy = self.apps_v1.read_namespaced_deployment(name=name, namespace=ns)
-            revision = deploy.metadata.annotations.get("deployment.kubernetes.io/revision", "1")
+            current_revision = deploy.metadata.annotations.get("deployment.kubernetes.io/revision")
+            if not current_revision:
+                raise KubernetesClientError("No revision annotation found on deployment.")
+
+            target_revision = str(int(current_revision) - 1)
+            if int(target_revision) <= 0:
+                raise KubernetesClientError(f"Cannot rollback: target revision {target_revision} is invalid.")
+
+            # 2. Get list of ReplicaSets in the namespace to find the previous one
+            replica_sets = self.apps_v1.list_namespaced_replica_set(namespace=ns)
+            target_rs = None
+            for rs in replica_sets.items:
+                owners = rs.metadata.owner_references or []
+                belongs_to_deploy = any(o.kind == "Deployment" and o.name == name for o in owners)
+                if belongs_to_deploy:
+                    rs_revision = rs.metadata.annotations.get("deployment.kubernetes.io/revision")
+                    if rs_revision == target_revision:
+                        target_rs = rs
+                        break
+
+            if not target_rs:
+                raise KubernetesClientError(f"Could not find ReplicaSet for deployment '{name}' with revision '{target_revision}'.")
+
+            # 3. Patch the deployment's spec.template with the target ReplicaSet's spec.template
+            template_dict = self.apps_v1.api_client.sanitize_for_serialization(target_rs.spec.template)
             body = {
                 "spec": {
-                    "rollbackTo": {"revision": int(revision) - 1}
+                    "template": template_dict
                 }
             }
             self.apps_v1.patch_namespaced_deployment(name=name, namespace=ns, body=body)
-            logger.info("deployment_rolled_back", deployment=name, namespace=ns)
+            logger.info("deployment_rolled_back", deployment=name, target_revision=target_revision, namespace=ns)
             return True
         except Exception as e:
             raise KubernetesClientError(f"Failed to rollback deployment {name}: {e}") from e
