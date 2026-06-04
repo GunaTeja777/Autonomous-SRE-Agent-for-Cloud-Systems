@@ -1,4 +1,4 @@
- import asyncio
+import asyncio
 from typing import Any
 
 from app.monitoring.prometheus_client import PrometheusClient

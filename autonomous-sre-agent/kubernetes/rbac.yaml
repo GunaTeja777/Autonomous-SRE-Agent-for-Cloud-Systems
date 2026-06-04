@@ -1,32 +1,32 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-	name: autonomous-sre-agent
+  name: autonomous-sre-agent
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-	name: autonomous-sre-agent
+  name: autonomous-sre-agent
 rules:
-	- apiGroups: [""]
-		resources: ["pods", "pods/log", "events"]
-		verbs: ["get", "list", "watch", "delete"]
-	- apiGroups: [""]
-		resources: ["nodes"]
-		verbs: ["get", "list", "watch", "patch", "update"]
-	- apiGroups: ["apps"]
-		resources: ["deployments", "deployments/scale"]
-		verbs: ["get", "list", "watch", "patch", "update"]
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "events"]
+    verbs: ["get", "list", "watch", "delete"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch", "patch", "update"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "deployments/scale"]
+    verbs: ["get", "list", "watch", "patch", "update"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-	name: autonomous-sre-agent
+  name: autonomous-sre-agent
 subjects:
-	- kind: ServiceAccount
-		name: autonomous-sre-agent
-		namespace: default
+  - kind: ServiceAccount
+    name: autonomous-sre-agent
+    namespace: default
 roleRef:
-	kind: ClusterRole
-	name: autonomous-sre-agent
-	apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: autonomous-sre-agent
+  apiGroup: rbac.authorization.k8s.io

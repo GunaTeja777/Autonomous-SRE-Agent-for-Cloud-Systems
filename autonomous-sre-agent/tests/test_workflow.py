@@ -16,6 +16,9 @@ async def test_workflow_execution():
         "confidence": 0.90,
         "collected_data": {"metrics_summary": {}, "logs_summary": {}, "pods_count": 1, "events_count": 0, "traces_count": 0}
     })
+    mock_rca.prometheus.get_all_metrics_for_namespace = AsyncMock(return_value={})
+    mock_rca.loki.get_all_logs_for_incident = AsyncMock(return_value={})
+    mock_rca.k8s.get_pods = MagicMock(return_value=[])
 
     mock_reasoning = MagicMock()
     # Mock client and return value

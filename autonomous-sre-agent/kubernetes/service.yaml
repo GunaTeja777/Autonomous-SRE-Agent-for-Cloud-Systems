@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: Service
 metadata:
-	name: autonomous-sre-agent
-	labels:
-		app: autonomous-sre-agent
+  name: autonomous-sre-agent
+  labels:
+    app: autonomous-sre-agent
 spec:
-	type: ClusterIP
-	selector:
-		app: autonomous-sre-agent
-	ports:
-		- name: http
-			port: 8000
-			targetPort: http
+  type: ClusterIP
+  selector:
+    app: autonomous-sre-agent
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http
