@@ -122,12 +122,12 @@ sequenceDiagram
     %% Phase 1: Detection
     Scanner->>Orch: Trigger loop tick (run_tick)
     Orch->>Clients: Fetch pods, metrics, and log lines
-    Note over Clients: Fast-fallback detects connection loss,<br/>enabling offline mock metrics (96% Memory, restarts)
+    Note over Clients: Fast-fallback detects connection loss, enables offline mock metrics (96% Memory, restarts)
     Clients-->>Orch: Returns simulated telemetry
     Orch->>Detector: detect(metrics, logs)
     Detector-->>Orch: returns anomaly=True
     Orch->>Workflow: create_incident & execute_incident_workflow()
-    
+
     %% Phase 2: RCA & Plan
     Workflow->>Workflow: state = "investigating"
     Workflow->>RCA: analyze_incident()
@@ -146,7 +146,7 @@ sequenceDiagram
     Note over Risk: Flags DRY_RUN=True safety block
     Risk-->>Workflow: approved=False (recommend: abort)
     Workflow->>Workflow: state = "needs_human"
-    
+
     %% Phase 3: Human Gating & Execution
     Developer->>Workflow: POST /api/incidents/{incident_id}/approve
     Workflow->>Workflow: state = "remediating"
@@ -155,12 +155,12 @@ sequenceDiagram
     Note over Clients: Appends resources to REMEDIATED_PODS
     Clients-->>Exec: True (Success)
     Exec-->>Workflow: Plan execution completed
-    
+
     %% Phase 4: Verification
     Workflow->>Workflow: state = "verifying" (waits 15s cooldown)
     Workflow->>Verify: verify(incident)
     Verify->>Clients: Get metrics & pod states
-    Note over Clients: REMEDIATED_PODS checked;<br/>returns recovered metrics (15% CPU, 45% Memory, 0 restarts)
+    Note over Clients: REMEDIATED_PODS checked, returns recovered metrics (15% CPU, 45% Memory, 0 restarts)
     Clients-->>Verify: Clean telemetry
     Verify-->>Workflow: resolved=True
     Workflow->>Memory: store_incident() in vector store
