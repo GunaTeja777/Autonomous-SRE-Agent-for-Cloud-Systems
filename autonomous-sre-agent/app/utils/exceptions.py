@@ -1,27 +1,58 @@
-import structlog
-import logging
-import sys
-from app.config import get_settings
+class SREAgentError(Exception):
+    """Base exception for all SRE Agent errors."""
+    pass
 
 
-def setup_logging() -> None:
-    settings = get_settings()
-    log_level = getattr(logging, settings.log_level.upper(), logging.INFO)
-
-    structlog.configure(
-        processors=[
-            structlog.contextvars.merge_contextvars,
-            structlog.processors.add_log_level,
-            structlog.processors.TimeStamper(fmt="iso"),
-            structlog.dev.ConsoleRenderer() if settings.environment == "development"
-            else structlog.processors.JSONRenderer(),
-        ],
-        wrapper_class=structlog.make_filtering_bound_logger(log_level),
-        context_class=dict,
-        logger_factory=structlog.PrintLoggerFactory(file=sys.stdout),
-        cache_logger_on_first_use=True,
-    )
+class KubernetesClientError(SREAgentError):
+    """Failed to interact with Kubernetes cluster."""
+    pass
 
 
-def get_logger(name: str) -> structlog.BoundLogger:
-    return structlog.get_logger(name)
+class LokiQueryError(SREAgentError):
+    """Failed to query Loki logs."""
+    pass
+
+
+class PrometheusQueryError(SREAgentError):
+    """Failed to query Prometheus metrics."""
+    pass
+
+
+class TracingQueryError(SREAgentError):
+    """Failed to query Traces (Jaeger)."""
+    pass
+
+
+class LLMError(SREAgentError):
+    """Failed to query LLM or parse its output."""
+    pass
+
+
+class LLMClientError(LLMError):
+    """Specific error calling the LLM client API."""
+    pass
+
+
+class RemediationError(SREAgentError):
+    """Failed to perform remediation actions."""
+    pass
+
+
+class OrchestratorError(SREAgentError):
+    """Errors within the Orchestrator loop."""
+    pass
+
+
+class IncidentMemoryError(SREAgentError):
+    """Failed to store or retrieve incident memory."""
+    pass
+
+
+class RunbookError(SREAgentError):
+    """Failed to parse or retrieve runbooks."""
+    pass
+
+
+class VectorStoreError(SREAgentError):
+    """Failed to perform operations on the vector store."""
+    pass
