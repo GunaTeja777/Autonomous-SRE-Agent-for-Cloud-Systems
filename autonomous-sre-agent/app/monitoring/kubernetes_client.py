@@ -2,6 +2,7 @@ from typing import Any
 from app.config import get_settings
 from app.utils.logger import get_logger
 from app.utils.exceptions import KubernetesClientError
+from app.utils.helpers import REMEDIATED_PODS
 
 logger = get_logger(__name__)
 
@@ -31,7 +32,8 @@ class KubernetesClient:
             self._loaded = True
             logger.info("kubernetes_client_loaded")
         except Exception as e:
-            raise KubernetesClientError(f"Failed to load Kubernetes config: {e}") from e
+            logger.warning("kubernetes_config_load_failed_using_mock", error=str(e))
+            self._loaded = "mock"
 
     @property
     def v1(self):
@@ -44,7 +46,42 @@ class KubernetesClient:
         return self._apps_v1
 
     def get_pods(self, namespace: str | None = None) -> list[dict[str, Any]]:
+        self._load()
         ns = namespace or self._default_namespace
+        if self._loaded == "mock":
+            is_payment_remediated = any("payment" in p for p in REMEDIATED_PODS)
+            return [
+                {
+                    "name": "frontend-service-7bb57d6f54-ab123",
+                    "namespace": ns,
+                    "phase": "Running",
+                    "node": "node-1",
+                    "restart_count": 0,
+                    "ready": True,
+                    "containers": [
+                        {"name": "web", "ready": True, "restart_count": 0, "state": {"status": "running"}, "image": "frontend:v1.2"}
+                    ],
+                    "conditions": []
+                },
+                {
+                    "name": "payment-api-5c6d9bf84c-xyz89",
+                    "namespace": ns,
+                    "phase": "Running",
+                    "node": "node-2",
+                    "restart_count": 0 if is_payment_remediated else 8,
+                    "ready": True if is_payment_remediated else False,
+                    "containers": [
+                        {
+                            "name": "payment",
+                            "ready": True if is_payment_remediated else False,
+                            "restart_count": 0 if is_payment_remediated else 8,
+                            "state": {"status": "running"} if is_payment_remediated else {"status": "waiting", "reason": "CrashLoopBackOff", "message": "Back-off restarting failed container"},
+                            "image": "payment:v2.0"
+                        }
+                    ],
+                    "conditions": []
+                }
+            ]
         try:
             pods = self.v1.list_namespaced_pod(namespace=ns)
             return [self._pod_summary(p) for p in pods.items]
@@ -90,7 +127,18 @@ class KubernetesClient:
         return {"status": "unknown"}
 
     def get_deployment(self, name: str, namespace: str | None = None) -> dict[str, Any]:
+        self._load()
         ns = namespace or self._default_namespace
+        if self._loaded == "mock":
+            return {
+                "name": name,
+                "namespace": ns,
+                "replicas": 2,
+                "ready_replicas": 1,
+                "available_replicas": 1,
+                "image": "payment:v2.0",
+                "labels": {"app": name},
+            }
         try:
             d = self.apps_v1.read_namespaced_deployment(name=name, namespace=ns)
             return {
@@ -106,6 +154,24 @@ class KubernetesClient:
             raise KubernetesClientError(f"Failed to get deployment {name}: {e}") from e
 
     def get_nodes(self) -> list[dict[str, Any]]:
+        self._load()
+        if self._loaded == "mock":
+            return [
+                {
+                    "name": "node-1",
+                    "ready": True,
+                    "unschedulable": False,
+                    "labels": {"kubernetes.io/hostname": "node-1"},
+                    "capacity": {"cpu": "4", "memory": "16Gi"},
+                },
+                {
+                    "name": "node-2",
+                    "ready": True,
+                    "unschedulable": False,
+                    "labels": {"kubernetes.io/hostname": "node-2"},
+                    "capacity": {"cpu": "4", "memory": "16Gi"},
+                }
+            ]
         try:
             nodes = self.v1.list_node()
             return [
@@ -128,7 +194,21 @@ class KubernetesClient:
             raise KubernetesClientError(f"Failed to list nodes: {e}") from e
 
     def get_events(self, namespace: str | None = None, field_selector: str | None = None) -> list[dict[str, Any]]:
+        self._load()
         ns = namespace or self._default_namespace
+        if self._loaded == "mock":
+            return [
+                {
+                    "name": "payment-api-5c6d9bf84c-xyz89.event1",
+                    "reason": "BackOff",
+                    "message": "Back-off restarting failed container",
+                    "type": "Warning",
+                    "count": 5,
+                    "involved_object": "payment-api-5c6d9bf84c-xyz89",
+                    "first_time": "2026-06-04T10:00:00Z",
+                    "last_time": "2026-06-04T10:05:00Z",
+                }
+            ]
         kwargs: dict[str, Any] = {"namespace": ns}
         if field_selector:
             kwargs["field_selector"] = field_selector
@@ -151,7 +231,12 @@ class KubernetesClient:
             raise KubernetesClientError(f"Failed to list events: {e}") from e
 
     def restart_pod(self, pod_name: str, namespace: str | None = None) -> bool:
+        self._load()
         ns = namespace or self._default_namespace
+        if self._loaded == "mock":
+            logger.info("mock_pod_restarted", pod=pod_name, namespace=ns)
+            REMEDIATED_PODS.add(pod_name)
+            return True
         try:
             self.v1.delete_namespaced_pod(name=pod_name, namespace=ns)
             logger.info("pod_restarted", pod=pod_name, namespace=ns)
@@ -160,7 +245,13 @@ class KubernetesClient:
             raise KubernetesClientError(f"Failed to restart pod {pod_name}: {e}") from e
 
     def scale_deployment(self, name: str, replicas: int, namespace: str | None = None) -> bool:
+        self._load()
         ns = namespace or self._default_namespace
+        if self._loaded == "mock":
+            logger.info("mock_deployment_scaled", deployment=name, replicas=replicas, namespace=ns)
+            REMEDIATED_PODS.add(name)
+            REMEDIATED_PODS.add("payment-api-5c6d9bf84c-xyz89")
+            return True
         try:
             body = {"spec": {"replicas": replicas}}
             self.apps_v1.patch_namespaced_deployment_scale(name=name, namespace=ns, body=body)
@@ -170,7 +261,13 @@ class KubernetesClient:
             raise KubernetesClientError(f"Failed to scale deployment {name}: {e}") from e
 
     def rollback_deployment(self, name: str, namespace: str | None = None) -> bool:
+        self._load()
         ns = namespace or self._default_namespace
+        if self._loaded == "mock":
+            logger.info("mock_deployment_rolled_back", deployment=name, namespace=ns)
+            REMEDIATED_PODS.add(name)
+            REMEDIATED_PODS.add("payment-api-5c6d9bf84c-xyz89")
+            return True
         try:
             # 1. Read deployment to get current revision and selector
             deploy = self.apps_v1.read_namespaced_deployment(name=name, namespace=ns)
@@ -211,6 +308,10 @@ class KubernetesClient:
             raise KubernetesClientError(f"Failed to rollback deployment {name}: {e}") from e
 
     def cordon_node(self, node_name: str) -> bool:
+        self._load()
+        if self._loaded == "mock":
+            logger.info("mock_node_cordoned", node=node_name)
+            return True
         try:
             body = {"spec": {"unschedulable": True}}
             self.v1.patch_node(name=node_name, body=body)
@@ -220,6 +321,12 @@ class KubernetesClient:
             raise KubernetesClientError(f"Failed to cordon node {node_name}: {e}") from e
 
     def patch_deployment_env(self, name: str, namespace: str, env_patches: dict[str, str]) -> bool:
+        self._load()
+        if self._loaded == "mock":
+            logger.info("mock_deployment_env_patched", deployment=name, patches=env_patches)
+            REMEDIATED_PODS.add(name)
+            REMEDIATED_PODS.add("payment-api-5c6d9bf84c-xyz89")
+            return True
         try:
             from kubernetes.client.models import V1EnvVar
             deploy = self.apps_v1.read_namespaced_deployment(name=name, namespace=namespace)

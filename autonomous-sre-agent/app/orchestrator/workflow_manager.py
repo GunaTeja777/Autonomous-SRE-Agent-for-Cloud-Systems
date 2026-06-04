@@ -99,16 +99,17 @@ class WorkflowManager:
             incident.remediation_plan = remediation_plan
 
             # 5. Risk Assessment (Programmatic + LLM if available)
-            risk_context = {
-                "confidence": final_rca.get("confidence", 0.0),
-                "recent_incident_count": 0, # Could retrieve from state_manager
-                "service_criticality": "medium"
-            }
-            risk_assessment = await self.risk_agent.assess_risk(remediation_plan, risk_context)
-            incident.risk_assessment = risk_assessment
+            if not incident.risk_assessment.get("approved", False):
+                risk_context = {
+                    "confidence": final_rca.get("confidence", 0.0),
+                    "recent_incident_count": 0, # Could retrieve from state_manager
+                    "service_criticality": "medium"
+                }
+                risk_assessment = await self.risk_agent.assess_risk(remediation_plan, risk_context)
+                incident.risk_assessment = risk_assessment
 
-            if not risk_assessment.get("approved", False):
-                incident.error_message = f"Risk assessment rejected remediation action. Reason: {', '.join(risk_assessment.get('concerns', []))}"
+            if not incident.risk_assessment.get("approved", False):
+                incident.error_message = f"Risk assessment rejected remediation action. Reason: {', '.join(incident.risk_assessment.get('concerns', []))}"
                 incident.transition(IncidentStatus.NEEDS_HUMAN)
                 logger.warning("workflow_remediation_aborted_by_risk_assessment", reason=incident.error_message)
                 return

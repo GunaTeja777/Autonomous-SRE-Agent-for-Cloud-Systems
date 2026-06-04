@@ -59,3 +59,7 @@ def format_duration(seconds: float) -> str:
 def sanitize_label(label: str) -> str:
     """Sanitize a string to be a valid Kubernetes label value."""
     return "".join(c if c.isalnum() or c in "-_." else "-" for c in label).strip("-")
+
+
+# Global set to track mock-remediated resources across clients
+REMEDIATED_PODS = set()
