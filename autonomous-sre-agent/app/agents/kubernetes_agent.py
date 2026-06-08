@@ -36,8 +36,8 @@ class KubernetesAgent:
 
                 # Check waiting reasons
                 if status == "waiting":
-                    reason = state.get("reason", "")
-                    message = state.get("message", "")
+                    reason = state.get("reason") or ""
+                    message = state.get("message") or ""
                     evidence.append(f"Container {c_name} in pod {pod_name} is waiting (reason: {reason}, msg: {message})")
 
                     if "crashloop" in reason.lower() or "crashloopbackoff" in reason.lower():
@@ -55,7 +55,7 @@ class KubernetesAgent:
 
                 # Check terminated reasons (OOM)
                 elif status == "terminated":
-                    reason = state.get("reason", "")
+                    reason = state.get("reason") or ""
                     exit_code = state.get("exit_code")
                     evidence.append(f"Container {c_name} in pod {pod_name} terminated (reason: {reason}, exit_code: {exit_code})")
 
@@ -66,10 +66,10 @@ class KubernetesAgent:
 
         # 2. Inspect Events (Failed scheduling, node issues, etc.)
         for event in events:
-            reason = event.get("reason", "")
-            message = event.get("message", "")
-            event_type = event.get("type", "")
-            involved_obj = event.get("involved_object", "")
+            reason = event.get("reason") or ""
+            message = event.get("message") or ""
+            event_type = event.get("type") or ""
+            involved_obj = event.get("involved_object") or ""
 
             # Schedule failures / Node capacity issues
             if "failedscheduling" in reason.lower() or "insufficient" in message.lower():
@@ -86,7 +86,7 @@ class KubernetesAgent:
                     description = f"Kubernetes node failure detected: {message}."
                     confidence = 0.90
 
-            elif "backoff" in reason.lower() and event_type == "Warning":
+            elif "backoff" in reason.lower() and event_type.lower() == "warning":
                 evidence.append(f"Warning backoff event: {message} (object: {involved_obj})")
                 if category == RootCauseCategory.UNKNOWN or confidence < 0.80:
                     category = RootCauseCategory.CRASHLOOP

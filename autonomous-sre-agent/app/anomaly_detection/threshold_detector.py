@@ -16,7 +16,7 @@ class ThresholdDetector:
         # 1. CPU check
         cpu_val = extract_metric_value(metrics.get("cpu", []))
         # If cpu_val is a fraction (e.g. 0.90 for 90%), normalize to percentage
-        cpu_pct = cpu_val * 100.0 if cpu_val <= 1.0 else cpu_val
+        cpu_pct = cpu_val * 100.0 if cpu_val < 10.0 else cpu_val
         if cpu_pct > self.settings.threshold_cpu_percent:
             violations.append({
                 "metric": "CPU Usage",
