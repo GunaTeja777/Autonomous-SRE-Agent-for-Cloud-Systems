@@ -21,3 +21,9 @@ scrape_configs:
     metrics_path: /metrics
     static_configs:
       - targets: ["jaeger:14269"]
+
+  - job_name: payment-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["payment-api:8080"]
+
