@@ -67,6 +67,14 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(routes.router, prefix="/api")
 
+# Mount web dashboard static files
+import os
+from fastapi.staticfiles import StaticFiles
+
+web_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "web")
+if os.path.exists(web_dir):
+    app.mount("/", StaticFiles(directory=web_dir, html=True), name="web")
+
 
 if __name__ == "__main__":
     settings = get_settings()
