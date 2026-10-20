@@ -118,7 +118,7 @@ def get_cluster_status(request: Request):
     try:
         pods = k8s.get_pods(settings.k8s_namespace)
         pod_count = len(pods)
-        k8s_connected = getattr(k8s, "_loaded", None) == "real"
+        k8s_connected = getattr(k8s, "_loaded", None) is True
     except Exception:
         k8s_connected = False
 
@@ -128,7 +128,7 @@ def get_cluster_status(request: Request):
         "pod_count": pod_count,
         "namespace": settings.k8s_namespace,
         "gemini_configured": bool(settings.gemini_api_key),
-        "gemini_model": settings.gemini_model,
+        "gemini_model": settings.llm_model,
     }
 
 
