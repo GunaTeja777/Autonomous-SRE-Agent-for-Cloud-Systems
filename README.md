@@ -412,3 +412,55 @@ python tests/test_docker_chaos.py
    curl http://localhost:8000/api/incidents/<incident_id>/report
    ```
 
+---
+
+### 6.4 Mode C: Live Kubernetes Cluster Auto-Remediation Verification
+Verified directly against a real live Kubernetes cluster (`desktop-control-plane` v1.34.3) running via Docker Desktop:
+
+#### 1. Cluster Connectivity & Pod Discovery
+```powershell
+cd autonomous-sre-agent
+$env:PYTHONPATH="."
+.\.venv\Scripts\python.exe tests/verify_k8s.py
+```
+**Output:**
+```text
+[info] kubernetes_client_loaded
+Loaded status: True
+Connected to REAL Kubernetes cluster
+Found nginx-test deployment
+Found nginx-test pod
+```
+
+#### 2. Live Automated Cluster Scaling Remediation
+Scales the real live deployment `nginx-test` from 1 to 3 replicas through the SRE Agent's validated execution engine:
+```powershell
+$env:PYTHONPATH="."
+.\.venv\Scripts\python.exe tests/verify_scaling.py
+```
+**Output:**
+```text
+Current Deployment: nginx-test
+Current Replicas: 1
+Executing remediation plan to scale nginx-test deployment to 3 replicas...
+[info] sandbox_validating_action action=scale_deployment target=nginx-test
+[info] kubectl_action_executing action=scale_deployment params={'replicas': 3, 'namespace': 'default'} target=nginx-test
+[info] deployment_scaled deployment=nginx-test namespace=default replicas=3
+[info] remediation_execution_completed_successfully plan_id=PLAN-SCALE-VERIFY
+
+Deployment nginx-test
+Replicas: 3
+```
+
+#### 3. Real Kubernetes Cluster State Verified via `kubectl`:
+```powershell
+kubectl get pods
+```
+```text
+NAME                          READY   STATUS    RESTARTS   AGE
+nginx-test-66cf5ddf9b-kmmbc   1/1     Running   0          3m
+nginx-test-66cf5ddf9b-pdsfh   1/1     Running   0          9m
+nginx-test-66cf5ddf9b-rv8j2   1/1     Running   0          3m
+```
+
+
