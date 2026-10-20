@@ -76,21 +76,9 @@ services:
       - sre-net
     restart: unless-stopped
 
-  chromadb:
-    image: chromadb/chroma:0.5.3
-    container_name: chromadb
-    ports:
-      - "8001:8000"
-    volumes:
-      - chroma_data:/chroma/.chroma
-    networks:
-      - sre-net
-    restart: unless-stopped
-
 volumes:
   prometheus_data:
   grafana_data:
-  chroma_data:
 
 networks:
   sre-net:
