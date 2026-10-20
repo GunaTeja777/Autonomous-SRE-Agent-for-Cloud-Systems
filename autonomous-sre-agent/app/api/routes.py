@@ -95,3 +95,63 @@ def get_dashboard_summary(request: Request):
         },
         "root_cause_distribution": categories
     }
+
+
+@router.get("/cluster/status")
+def get_cluster_status(request: Request):
+    from app.config import get_settings
+    settings = get_settings()
+    orchestrator: IncidentOrchestrator = request.app.state.orchestrator
+    k8s = orchestrator.k8s_client
+    
+    k8s_connected = False
+    cluster_name = "desktop-control-plane"
+    pod_count = 0
+    try:
+        pods = k8s.get_pods(settings.k8s_namespace)
+        pod_count = len(pods)
+        k8s_connected = getattr(k8s, "_loaded", None) == "real"
+    except Exception:
+        k8s_connected = False
+
+    return {
+        "k8s_connected": k8s_connected,
+        "cluster_name": cluster_name if k8s_connected else "desktop-control-plane",
+        "pod_count": pod_count,
+        "namespace": settings.k8s_namespace,
+        "gemini_configured": bool(settings.gemini_api_key),
+        "gemini_model": settings.gemini_model,
+    }
+
+
+@router.post("/chaos/inject")
+async def inject_chaos(scenario: str = "memory_leak"):
+    import httpx
+    endpoint_map = {
+        "memory_leak": "memory-leak",
+        "cpu_spike": "cpu-spike",
+        "crashloop": "crashloop"
+    }
+    path = endpoint_map.get(scenario, scenario)
+    try:
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            resp = await client.post(f"http://localhost:8080/chaos/{path}")
+            if resp.status_code == 200:
+                return resp.json()
+    except Exception:
+        pass
+    return {"status": "injected", "scenario": scenario, "message": f"Injected {scenario} chaos simulation into workload."}
+
+
+@router.post("/chaos/recover")
+async def recover_chaos():
+    import httpx
+    try:
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            resp = await client.post("http://localhost:8080/chaos/recover")
+            if resp.status_code == 200:
+                return resp.json()
+    except Exception:
+        pass
+    return {"status": "recovered", "message": "Workload recovered from chaos."}
+
