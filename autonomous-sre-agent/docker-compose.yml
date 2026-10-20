@@ -9,7 +9,6 @@ services:
     env_file: .env
     volumes:
       - ./data:/app/data
-      - ~/.kube:/root/.kube:ro
     depends_on:
       - prometheus
       - loki
