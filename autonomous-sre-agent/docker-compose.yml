@@ -12,7 +12,6 @@ services:
     depends_on:
       - prometheus
       - loki
-      - chromadb
       - payment-api
     networks:
       - sre-net
