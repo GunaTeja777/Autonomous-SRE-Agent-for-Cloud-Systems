@@ -9,19 +9,27 @@ from app.reports.incident_report import IncidentReport
 router = APIRouter()
 
 
+def get_orchestrator(request: Request) -> IncidentOrchestrator:
+    orchestrator = getattr(request.app.state, "orchestrator", None)
+    if not orchestrator:
+        orchestrator = IncidentOrchestrator()
+        request.app.state.orchestrator = orchestrator
+    return orchestrator
+
+
 class TriggerScanRequest(BaseModel):
     namespace: str = "default"
 
 
 @router.get("/incidents")
 def list_incidents(request: Request):
-    orchestrator: IncidentOrchestrator = request.app.state.orchestrator
+    orchestrator = get_orchestrator(request)
     return orchestrator.state_manager.list_incidents()
 
 
 @router.get("/incidents/{incident_id}")
 def get_incident(incident_id: str, request: Request):
-    orchestrator: IncidentOrchestrator = request.app.state.orchestrator
+    orchestrator = get_orchestrator(request)
     incident = orchestrator.state_manager.get_incident(incident_id)
     if not incident:
         raise HTTPException(status_code=404, detail="Incident not found")
@@ -30,7 +38,7 @@ def get_incident(incident_id: str, request: Request):
 
 @router.get("/incidents/{incident_id}/report", response_class=PlainTextResponse)
 def get_incident_report(incident_id: str, request: Request):
-    orchestrator: IncidentOrchestrator = request.app.state.orchestrator
+    orchestrator = get_orchestrator(request)
     incident = orchestrator.state_manager.get_incident(incident_id)
     if not incident:
         raise HTTPException(status_code=404, detail="Incident not found")
@@ -41,7 +49,7 @@ def get_incident_report(incident_id: str, request: Request):
 
 @router.post("/trigger")
 async def trigger_scan(body: TriggerScanRequest, request: Request):
-    orchestrator: IncidentOrchestrator = request.app.state.orchestrator
+    orchestrator = get_orchestrator(request)
     triggered = await orchestrator.run_tick(body.namespace)
     
     # Refresh dashboard export immediately
@@ -60,7 +68,7 @@ async def trigger_scan(body: TriggerScanRequest, request: Request):
 
 @router.post("/incidents/{incident_id}/approve")
 async def approve_remediation(incident_id: str, request: Request):
-    orchestrator: IncidentOrchestrator = request.app.state.orchestrator
+    orchestrator = get_orchestrator(request)
     success = await orchestrator.trigger_manual_remediation(incident_id)
     if not success:
         raise HTTPException(status_code=400, detail="Failed to approve. Incident may not be in 'needs_human' status or does not exist.")
@@ -69,7 +77,7 @@ async def approve_remediation(incident_id: str, request: Request):
 
 @router.get("/dashboard")
 def get_dashboard_summary(request: Request):
-    orchestrator: IncidentOrchestrator = request.app.state.orchestrator
+    orchestrator = get_orchestrator(request)
     incidents = orchestrator.state_manager.list_incidents()
     
     total = len(incidents)
@@ -101,7 +109,7 @@ def get_dashboard_summary(request: Request):
 def get_cluster_status(request: Request):
     from app.config import get_settings
     settings = get_settings()
-    orchestrator: IncidentOrchestrator = request.app.state.orchestrator
+    orchestrator = get_orchestrator(request)
     k8s = orchestrator.k8s_client
     
     k8s_connected = False
