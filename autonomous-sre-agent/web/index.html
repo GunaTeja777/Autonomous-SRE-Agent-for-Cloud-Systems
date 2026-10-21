@@ -6,50 +6,54 @@
   <title>Autonomous SRE Agent — Cloud Observability & Multi-Agent Tracing</title>
   <meta name="description" content="Production-grade Autonomous SRE Platform powered by Gemini 2.5 Flash, Multi-Agent Consensus, and Real-Time Kubernetes Remediation.">
   
-  <!-- Modern Typography -->
+  <!-- Modern Enterprise Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   
+  <!-- Chart.js for real-time graphs and telemetry plots -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
 
-  <!-- Top Navigation Header -->
-  <header class="navbar glass">
-    <div class="nav-left">
-      <a href="/" class="logo-badge" id="nav-brand">
-        <div class="logo-icon">SRE</div>
+  <!-- Top Enterprise Navbar -->
+  <header class="top-navbar">
+    <div class="brand-section">
+      <a href="/" class="brand-logo" id="nav-brand">
+        <div class="brand-icon">SRE</div>
         <div>
-          <div class="logo-text">Autonomous SRE Agent</div>
+          <span class="brand-name">Autonomous SRE</span>
         </div>
       </a>
-      <span class="logo-tag">MLOps Observability</span>
+      <span class="brand-tag">Cloud Observability</span>
 
-      <div class="nav-status-group">
+      <div class="cluster-pills-bar">
         <div class="status-chip" title="Connected to Local Kubernetes Control Plane" id="chip-k8s">
-          <span class="dot green pulse"></span>
-          <span id="k8s-status-text">K8s: desktop-control-plane</span>
+          <span class="chip-dot green"></span>
+          <span id="k8s-status-text">K8s: desktop-control-plane (5 pods)</span>
         </div>
         <div class="status-chip" title="Google Gemini 2.5 Flash reasoning model" id="chip-llm">
-          <span class="dot purple"></span>
+          <span class="chip-dot purple"></span>
           <span id="llm-status-text">Gemini 2.5 Flash</span>
         </div>
         <div class="status-chip" title="Autonomous SRE Scanner Tick Loop" id="chip-daemon">
-          <span class="dot cyan pulse"></span>
+          <span class="chip-dot blue"></span>
           <span>Auto-Scan: 30s Loop</span>
         </div>
       </div>
     </div>
 
-    <div class="nav-right">
-      <div style="display: flex; align-items: center; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-full); padding: 3px; gap: 4px;">
-        <button class="pill active" id="btn-mode-live" style="cursor: pointer; border: none; padding: 5px 12px; font-size: 11px;">🟢 Live Cluster Only</button>
-        <button class="pill" id="btn-mode-demo" style="cursor: pointer; border: none; padding: 5px 12px; font-size: 11px;">🧪 Demo Scenarios</button>
+    <div class="nav-actions">
+      <!-- Mode Switch: Live Cluster vs Demo Scenarios -->
+      <div class="mode-switch-group">
+        <button class="mode-btn active" id="btn-mode-live">🟢 Live Cluster Only</button>
+        <button class="mode-btn" id="btn-mode-demo">🧪 Demo Scenarios</button>
       </div>
 
       <button class="btn btn-secondary" id="btn-chaos-menu">
-        <span>⚡ Inject Chaos</span>
+        <span>⚡ Chaos Lab</span>
       </button>
       <button class="btn btn-secondary" id="btn-refresh">
         <span>🔄 Refresh</span>
@@ -60,106 +64,150 @@
     </div>
   </header>
 
-  <!-- Chaos Injection Dropdown Drawer / Panel (Hidden by default) -->
-  <div class="chaos-drawer glass" id="chaos-drawer" style="display: none; padding: 14px 24px; border-bottom: 1px solid var(--border-subtle); display: none; align-items: center; justify-content: space-between; background: rgba(14, 20, 36, 0.95);">
+  <!-- Chaos Injection Bar (Expandable) -->
+  <div class="chaos-bar" id="chaos-drawer">
     <div style="display: flex; align-items: center; gap: 12px;">
-      <span style="font-weight: 700; color: #fbbf24; font-size: 13px;">CHAOS LAB (Target: default namespace):</span>
-      <button class="btn btn-warning" id="btn-inject-oom" style="font-size: 12px; padding: 6px 12px;">Memory Leak (OOM Risk)</button>
-      <button class="btn btn-warning" id="btn-inject-cpu" style="font-size: 12px; padding: 6px 12px;">CPU Spike (Starvation)</button>
-      <button class="btn btn-warning" id="btn-inject-crash" style="font-size: 12px; padding: 6px 12px;">CrashLoopBackOff</button>
-      <button class="btn btn-secondary" id="btn-chaos-stop" style="font-size: 12px; padding: 6px 12px;">Reset / Recover</button>
+      <span style="font-weight: 700; color: var(--text-main); font-size: 12px;">CHAOS SIMULATION (Target: default namespace):</span>
+      <button class="btn btn-warning" id="btn-inject-oom">Memory Leak (OOM Risk)</button>
+      <button class="btn btn-warning" id="btn-inject-cpu">CPU Starvation Spike</button>
+      <button class="btn btn-warning" id="btn-inject-crash">CrashLoopBackOff</button>
+      <button class="btn btn-secondary" id="btn-chaos-stop">Reset / Recover</button>
     </div>
-    <button class="btn btn-secondary" id="btn-close-chaos" style="padding: 4px 10px; font-size: 11px;">✕ Close</button>
+    <button class="btn btn-secondary" id="btn-close-chaos" style="padding: 2px 8px; font-size: 11px;">✕ Close</button>
   </div>
 
-  <!-- KPI Metrics Strip -->
-  <section class="kpi-container" id="kpi-strip">
-    <div class="kpi-card">
-      <div class="kpi-header">
+  <!-- KPI Summary Strip -->
+  <section class="metrics-row">
+    <div class="metric-card">
+      <div class="metric-card-label">
+        <span>Monitored Pods</span>
+        <span>🖥️</span>
+      </div>
+      <div class="metric-card-value" id="kpi-pods-count">5</div>
+      <div class="metric-card-sub success" id="kpi-pods-sub">● All Workloads Online</div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-card-label">
         <span>Total Incidents</span>
-        <span class="kpi-icon">📋</span>
+        <span>📋</span>
       </div>
-      <div class="kpi-value" id="kpi-total">0</div>
-      <div class="kpi-subtext">Across monitored cluster</div>
+      <div class="metric-card-value" id="kpi-total">0</div>
+      <div class="metric-card-sub" id="kpi-total-sub">Analyzed by Multi-Agent Swarm</div>
     </div>
 
-    <div class="kpi-card">
-      <div class="kpi-header">
+    <div class="metric-card">
+      <div class="metric-card-label">
         <span>Active / In-Flight</span>
-        <span class="kpi-icon">⚡</span>
+        <span>⚡</span>
       </div>
-      <div class="kpi-value" style="color: #c084fc;" id="kpi-active">0</div>
-      <div class="kpi-subtext">Triaging & Consensus</div>
+      <div class="metric-card-value" style="color: var(--blue-600);" id="kpi-active">0</div>
+      <div class="metric-card-sub" id="kpi-active-sub">RCA & Consensus Triage</div>
     </div>
 
-    <div class="kpi-card">
-      <div class="kpi-header">
+    <div class="metric-card">
+      <div class="metric-card-label">
         <span>Awaiting Approval</span>
-        <span class="kpi-icon">🛡️</span>
+        <span>🛡️</span>
       </div>
-      <div class="kpi-value" style="color: #fbbf24;" id="kpi-needs-human">0</div>
-      <div class="kpi-subtext">High blast-radius gate</div>
+      <div class="metric-card-value" style="color: var(--amber-600);" id="kpi-needs-human">0</div>
+      <div class="metric-card-sub warning" id="kpi-human-sub">High Blast-Radius Safety Gate</div>
     </div>
 
-    <div class="kpi-card">
-      <div class="kpi-header">
-        <span>Auto-Remediated</span>
-        <span class="kpi-icon">✅</span>
+    <div class="metric-card">
+      <div class="metric-card-label">
+        <span>Cluster Health</span>
+        <span>✅</span>
       </div>
-      <div class="kpi-value" style="color: #34d399;" id="kpi-resolved">0</div>
-      <div class="kpi-subtext highlight" id="kpi-rate">100% MTTR Verified</div>
-    </div>
-
-    <div class="kpi-card">
-      <div class="kpi-header">
-        <span>Consensus Confidence</span>
-        <span class="kpi-icon">🧠</span>
-      </div>
-      <div class="kpi-value" style="color: #38bdf8;" id="kpi-confidence">96.4%</div>
-      <div class="kpi-subtext">Gemini 2.5 Flash + Multi-Agent</div>
+      <div class="metric-card-value" style="color: var(--emerald-600);" id="kpi-confidence">100%</div>
+      <div class="metric-card-sub success" id="kpi-rate">Zero Unresolved Anomalies</div>
     </div>
   </section>
 
-  <!-- Main Split Dashboard Layout -->
-  <main class="main-layout">
-    
-    <!-- Left Pane: Incident / Trace Runs Explorer -->
-    <aside class="incident-explorer" id="runs-explorer">
-      <div class="explorer-header">
-        <div class="explorer-title">
-          <span>Incident Traces</span>
-          <span style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);" id="incident-count-badge">0 runs</span>
+  <!-- Interactive Telemetry Graphs & Plots Deck -->
+  <section class="telemetry-deck">
+    <div class="deck-header">
+      <h2 class="deck-title">
+        <span>📊 Live Telemetry & Predictive Anomaly Curves</span>
+      </h2>
+      <span style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">Sampling window: Real-time 60s Prometheus/Loki telemetry</span>
+    </div>
+
+    <div class="chart-grid">
+      <!-- Plot 1: Memory Working Set vs Threshold -->
+      <div class="chart-box">
+        <div class="chart-box-header">
+          <span class="chart-box-title">Memory Working Set (MB)</span>
+          <span class="chart-box-tag">Threshold: 850 MB</span>
         </div>
-        
-        <input type="text" class="search-input" id="search-incidents" placeholder="Filter by Pod, ID, or Root Cause...">
-        
-        <div class="filter-pills" id="filter-pills">
-          <button class="pill active" data-filter="all">All</button>
-          <button class="pill" data-filter="needs_human">Needs Human</button>
-          <button class="pill" data-filter="investigating">In Progress</button>
-          <button class="pill" data-filter="resolved">Resolved</button>
-          <button class="pill" data-filter="failed">Failed</button>
+        <div class="chart-container">
+          <canvas id="chart-memory"></canvas>
         </div>
       </div>
 
-      <div class="incident-list" id="incident-list">
+      <!-- Plot 2: CPU Saturation & Throttling Rate -->
+      <div class="chart-box">
+        <div class="chart-box-header">
+          <span class="chart-box-title">CPU Utilization & Throttling (%)</span>
+          <span class="chart-box-tag">Alarm Ceiling: 80%</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="chart-cpu"></canvas>
+        </div>
+      </div>
+
+      <!-- Plot 3: Multi-Agent Consensus Confidence -->
+      <div class="chart-box">
+        <div class="chart-box-header">
+          <span class="chart-box-title">Specialist Consensus Matrix</span>
+          <span class="chart-box-tag">Gemini 2.5 Flash</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="chart-consensus"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Dual-Pane Workspace Layout -->
+  <main class="workspace-layout">
+
+    <!-- Left Pane: Runs & Incident Traces -->
+    <aside class="runs-panel">
+      <div class="panel-header">
+        <div class="panel-header-top">
+          <span class="panel-title">Incident Traces</span>
+          <span class="panel-badge" id="incident-count-badge">0 runs</span>
+        </div>
+
+        <input type="text" class="search-box" id="search-incidents" placeholder="Search by Pod, ID, or Root Cause...">
+
+        <div class="filter-row" id="filter-pills">
+          <button class="filter-chip active" data-filter="all">All</button>
+          <button class="filter-chip" data-filter="needs_human">Needs Human</button>
+          <button class="filter-chip" data-filter="investigating">In Progress</button>
+          <button class="filter-chip" data-filter="resolved">Resolved</button>
+        </div>
+      </div>
+
+      <div class="runs-list" id="incident-list">
         <!-- Rendered dynamically by app.js -->
         <div style="padding: 24px; text-align: center; color: var(--text-muted);">
-          Loading incident traces...
+          Loading cluster traces...
         </div>
       </div>
     </aside>
 
     <!-- Right Pane: Deep Trace Inspector -->
-    <section class="trace-inspector" id="trace-inspector">
+    <section class="inspector-panel" id="trace-inspector">
       
-      <!-- Sticky Inspector Header -->
-      <div class="inspector-header">
+      <!-- Top Inspector Header -->
+      <div class="inspector-top">
         <div class="inspector-headline">
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <h1 class="inspector-title" id="detail-id">Select an Incident Trace</h1>
-            <span class="node-badge" id="detail-status-badge" style="display: none;"></span>
-            <span class="node-badge" id="detail-severity-badge" style="display: none;"></span>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <h1 class="inspector-title" id="detail-id">Cluster Nominal • 0 Anomalies</h1>
+            <span class="badge badge-resolved" id="detail-status-badge">ALL HEALTHY</span>
+            <span class="badge" id="detail-severity-badge" style="display: none;"></span>
           </div>
 
           <div style="display: flex; gap: 8px;" id="header-action-group">
@@ -173,36 +221,23 @@
         </div>
 
         <div class="inspector-meta" id="detail-meta-strip" style="display: none;">
-          <div class="inspector-meta-item">
-            <span>Target Workload:</span>
-            <strong style="color: var(--text-primary); font-family: var(--font-mono);" id="detail-target-pod">-</strong>
-          </div>
-          <div class="inspector-meta-item">
-            <span>Namespace:</span>
-            <strong style="color: var(--text-primary); font-family: var(--font-mono);" id="detail-namespace">default</strong>
-          </div>
-          <div class="inspector-meta-item">
-            <span>Detected At:</span>
-            <strong style="color: var(--text-primary); font-family: var(--font-mono);" id="detail-detected-at">-</strong>
-          </div>
-        </div>
-
-        <!-- Inspector Tabs -->
-        <div class="inspector-tabs" id="inspector-tabs" style="display: none;">
-          <button class="tab-btn active" data-tab="trace-waterfall">Multi-Agent Trace Waterfall</button>
-          <button class="tab-btn" data-tab="consensus-matrix">Specialist Consensus Matrix</button>
-          <button class="tab-btn" data-tab="telemetry-view">Telemetry Comparison</button>
-          <button class="tab-btn" data-tab="postmortem-view">Markdown Postmortem</button>
+          <div>Workload: <strong id="detail-target-pod">-</strong></div>
+          <div>Namespace: <strong id="detail-namespace">default</strong></div>
+          <div>Detected: <strong id="detail-detected-at">-</strong></div>
         </div>
       </div>
 
-      <!-- Tab Content Area -->
-      <div class="inspector-content" id="inspector-content">
-        <div style="padding: 60px 20px; text-align: center; color: var(--text-muted);">
-          <div style="font-size: 42px; margin-bottom: 12px;">🔍</div>
-          <h2 style="font-size: 16px; color: var(--text-primary); margin-bottom: 6px;">No Incident Selected</h2>
-          <p style="font-size: 13px;">Select an incident run from the explorer on the left or trigger an automated cluster scan.</p>
-        </div>
+      <!-- Tab Navigation -->
+      <div class="tab-nav" id="inspector-tabs" style="display: none;">
+        <button class="tab-link active" data-tab="trace-waterfall">Multi-Agent Waterfall Trace</button>
+        <button class="tab-link" data-tab="consensus-matrix">Specialist Consensus Matrix</button>
+        <button class="tab-link" data-tab="telemetry-view">Telemetry Convergence</button>
+        <button class="tab-link" data-tab="postmortem-view">Postmortem Report</button>
+      </div>
+
+      <!-- Inspector Body Content Area -->
+      <div class="inspector-body" id="inspector-content">
+        <!-- Populated dynamically by app.js -->
       </div>
 
     </section>
@@ -211,25 +246,25 @@
 
   <!-- Human-in-the-Loop Remediation Approval Modal -->
   <div class="modal-overlay" id="approval-modal">
-    <div class="modal-card">
+    <div class="modal-box">
       <div style="display: flex; align-items: center; justify-content: space-between;">
-        <h3 style="font-size: 16px; font-weight: 800; color: #fbbf24;">🛡️ SRE Safety Gate: Human Approval Required</h3>
+        <h3 style="font-size: 15px; font-weight: 700; color: var(--amber-600);">🛡️ Human Authorization Required</h3>
         <button id="modal-close" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:16px;">✕</button>
       </div>
-      <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+      <p style="font-size: 12px; color: var(--text-body); line-height: 1.5;">
         The Autonomous SRE Agent has identified a high blast-radius remediation plan. Safety protocols require human sign-off before executing commands against the production Kubernetes cluster.
       </p>
 
-      <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 12px; font-size: 12px; font-family: var(--font-mono);">
-        <div><strong>Incident ID:</strong> <span id="modal-incident-id" style="color: var(--accent-cyan);">-</span></div>
+      <div style="background: var(--bg-subtle); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 12px; font-size: 12px; font-family: var(--font-mono);">
+        <div><strong>Incident ID:</strong> <span id="modal-incident-id" style="color: var(--blue-600);">-</span></div>
         <div style="margin-top: 4px;"><strong>Target:</strong> <span id="modal-pod-name">-</span></div>
-        <div style="margin-top: 4px;"><strong>Planned Action:</strong> <span id="modal-action-name" style="color: #60a5fa;">-</span></div>
-        <div style="margin-top: 4px;"><strong>Blast Radius Score:</strong> <span id="modal-blast-score" style="color: #f87171;">High (Safety Lock Active)</span></div>
+        <div style="margin-top: 4px;"><strong>Planned Action:</strong> <span id="modal-action-name" style="color: var(--emerald-600);">-</span></div>
+        <div style="margin-top: 4px;"><strong>Blast Radius Score:</strong> <span id="modal-blast-score" style="color: var(--rose-600);">High (Safety Lock Active)</span></div>
       </div>
 
-      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px;">
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px;">
         <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
-        <button class="btn btn-warning" id="modal-confirm">✅ Approve & Execute Live</button>
+        <button class="btn btn-primary" id="modal-confirm">✅ Approve & Execute Live</button>
       </div>
     </div>
   </div>
