@@ -115,22 +115,26 @@ LOKI_URL=http://localhost:3100
 JAEGER_URL=http://localhost:16686
 ```
 
-### 3.3 Running Locally
+### 3.3 Running Locally (Web Dashboard + API)
 ```powershell
 cd autonomous-sre-agent
 
-# 1. Create and activate virtual environment
-py -3.12 -m venv .venv
+# 1. Activate Python 3.12 virtual environment
 .\.venv\Scripts\activate
 
-# 2. Install dependencies
-pip install -r requirements.txt
-
-# 3. Start the FastAPI service
+# 2. Start the Autonomous SRE Agent service
 $env:PYTHONPATH="."
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --port 8000
 ```
-Interactive Swagger API documentation is available at `http://localhost:8000/docs`.
+
+- **LangSmith-Style Observability Web Dashboard:** Open `http://localhost:8000/` in any browser.
+  - **Trace Waterfall:** Step-by-step visual audit trail from anomaly ingestion to multi-agent consensus and Kubernetes API execution.
+  - **Consensus Matrix:** Side-by-side diagnostic validation across Metric, Log, Trace, and Kubernetes agents.
+  - **Gemini 2.5 Flash Reasoning:** Deep LLM chain-of-thought and confidence hypothesis breakdown.
+  - **Safety Gate & Human Approval:** 1-click authorization for high blast-radius remediations.
+  - **Chaos Lab Drawer:** Instant trigger buttons for Memory Leak (OOM), CPU Spike, and CrashLoopBackOff.
+  - **Postmortem Generator:** Full executive postmortem summary with 1-click clipboard export.
+- **Interactive Swagger REST API:** `http://localhost:8000/docs`
 
 ---
 

@@ -60,6 +60,7 @@ docker-compose.override.yml
 
 # ChromaDB
 data/embeddings/
+autonomous-sre-agent/data/embeddings/
 
 # Node
 node_modules/
