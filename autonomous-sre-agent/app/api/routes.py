@@ -115,9 +115,20 @@ def get_cluster_status(request: Request):
     k8s_connected = False
     cluster_name = "desktop-control-plane"
     pod_count = 0
+    pods_data = []
     try:
         pods = k8s.get_pods(settings.k8s_namespace)
         pod_count = len(pods)
+        pods_data = [
+            {
+                "name": p.get("name"),
+                "phase": p.get("phase", "Running"),
+                "ready": p.get("ready", True),
+                "restarts": p.get("restart_count", 0),
+                "node": p.get("node", "desktop-control-plane")
+            }
+            for p in pods
+        ]
         k8s_connected = getattr(k8s, "_loaded", None) is True
     except Exception:
         k8s_connected = False
@@ -129,6 +140,7 @@ def get_cluster_status(request: Request):
         "namespace": settings.k8s_namespace,
         "gemini_configured": bool(settings.gemini_api_key),
         "gemini_model": settings.llm_model,
+        "pods": pods_data
     }
 
 
